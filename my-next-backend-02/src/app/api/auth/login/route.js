@@ -29,6 +29,11 @@ export async function POST(req) {
     const response = NextResponse.json(
       {
         message: "Login successful",
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+        },
       },
       {
         status: 200,
@@ -72,7 +77,8 @@ async function checkUser(email, password) {
       return false;
     } else return user;
   } catch (error) {
-    console.log("exception", exception.toString());
+    console.log("==>Check User Exception", error);
+    return false;
   }
 }
 

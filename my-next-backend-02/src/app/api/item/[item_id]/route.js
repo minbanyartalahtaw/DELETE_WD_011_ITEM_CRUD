@@ -1,5 +1,9 @@
 import { getClientPromise } from "@/lib/mongodb";
 
+import { verifyJWT } from "@/lib/auth";
+
+import { writeAuditLog } from "@/lib/audit";
+
 import corsHeaders from "@/lib/cors";
 
 import { errorResponse, printExceptionLog, successResponse } from "@/lib/utils";
@@ -14,6 +18,10 @@ export async function OPTIONS() {
 }
 
 export async function GET(request, { params }) {
+  const user = verifyJWT(request);
+
+  if (!user) return errorResponse("Unauthorized Request", 401);
+
   const { item_id } = await params;
 
   try {
@@ -27,6 +35,11 @@ export async function GET(request, { params }) {
       .collection("item")
 
       .findOne({ _id: new ObjectId(item_id), status: { $ne: "DELETED" } });
+
+    await writeAuditLog(db, user, "GET_ITEM", {
+      itemId: item_id,
+      found: !!item,
+    });
 
     if (item) {
       return successResponse(
@@ -45,6 +58,10 @@ export async function GET(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const user = verifyJWT(request);
+
+  if (!user) return errorResponse("Unauthorized Request", 401);
+
   const { item_id } = await params;
 
   console.log("DELETE request for item_id:", item_id);
@@ -66,6 +83,11 @@ export async function DELETE(request, { params }) {
 
     console.log("Delete result:", deleteResult);
 
+    await writeAuditLog(db, user, "DELETE_ITEM", {
+      itemId: item_id,
+      modifiedCount: deleteResult.modifiedCount,
+    });
+
     return successResponse({ message: "Delete Success" }, 201);
   } catch (error) {
     printExceptionLog("DELETE Item Exception", error);
@@ -75,6 +97,10 @@ export async function DELETE(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const user = verifyJWT(request);
+
+  if (!user) return errorResponse("Unauthorized Request", 401);
+
   const { item_id } = await params;
 
   console.log("==>itemd id: ", item_id);
@@ -93,6 +119,8 @@ export async function PUT(request, { params }) {
       .findOne({ _id: new ObjectId(item_id), status: { $ne: "DELETED" } });
 
     if (storedItem) {
+      const before = { ...storedItem };
+
       storedItem.name = data.name;
 
       storedItem.price = data.price;
@@ -110,6 +138,13 @@ export async function PUT(request, { params }) {
       console.log("==>update result: ", updatedResult);
 
       const updateOk = Number(updatedResult.modifiedCount) > 0;
+
+      await writeAuditLog(db, user, "UPDATE_ITEM", {
+        itemId: item_id,
+        before: before,
+        after: storedItem,
+        success: updateOk,
+      });
 
       if (updateOk)
         return successResponse({ message: "Item update success" }, 201);

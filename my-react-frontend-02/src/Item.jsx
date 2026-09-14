@@ -93,6 +93,7 @@ export default function Item() {
   const loadItems = async () => {
     const fetchResult = await fetch(`${API_URL}/api/item`, {
       method: "GET",
+      credentials: "include",
     });
 
     if (fetchResult.ok) {
@@ -142,6 +143,8 @@ export default function Item() {
 
       method: "POST",
 
+      credentials: "include",
+
       headers: {
         "Content-Type": "application/json",
       },
@@ -159,6 +162,7 @@ export default function Item() {
     try {
       const deleteResult = await fetch(`${API_URL}/api/item/${rowId}`, {
         method: "DELETE",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

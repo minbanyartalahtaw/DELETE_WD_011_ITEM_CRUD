@@ -27,7 +27,7 @@ export function UserProvider({ children }) {
     if (result.ok) {
       const data = await result.json();
       console.log("==>user data: ", data);
-      setUser(data.user);
+      setUser(data);
       setIsLoggedIn(true);
     }
     setIsInitializing(false);
@@ -76,6 +76,7 @@ export function UserProvider({ children }) {
         isLogInError,
         loginErrorMsg,
         isInitializing,
+        isAdmin: user?.id === "-1",
       }}
     >
       {children}
