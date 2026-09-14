@@ -21,14 +21,18 @@ export function UserProvider({ children }) {
   }, []);
 
   const me = async () => {
-    const result = await fetch(`${API_URL}/api/me`, {
-      credentials: "include",
-    });
-    if (result.ok) {
-      const data = await result.json();
-      console.log("==>user data: ", data);
-      setUser(data);
-      setIsLoggedIn(true);
+    try {
+      const result = await fetch(`${API_URL}/api/me`, {
+        credentials: "include",
+      });
+      if (result.ok) {
+        const data = await result.json();
+        console.log("==>user data: ", data);
+        setUser(data);
+        setIsLoggedIn(true);
+      }
+    } catch (error) {
+      console.log("==>me() failed: ", error);
     }
     setIsInitializing(false);
   };
